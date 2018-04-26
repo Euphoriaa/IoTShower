@@ -2,6 +2,7 @@
 #include <Servo.h>
 
 #define flow_support false
+#define servo//motor
 
 //pin layout
 const uint16_t  d4 = 6, d5 = 5, d6 = 4, d7 = 3;
@@ -28,15 +29,15 @@ bool btnDWNclicked = false;
 
 float wantedTemp = 38;
 float currentTemp = 38;
-float p_correction = 1;//value to correct of error in p feedback
 
 
 
 
 
 
-
+#ifdef servo
 bool move_valve(Servo valve, uint16_t deg);
+#endif
 void checkButtons();
 void measureTemp();//todo
 void printWntTmp();
@@ -54,9 +55,10 @@ void setup() {
 
 	printWntTmp();
 	printCrntTmp();
-
+#ifdef servo
 	cold_servo.attach(cold_valve);
 	warm_servo.attach(warm_valve);
+#endif
 }
 
 
@@ -142,6 +144,8 @@ void checkButtons() {
 	else btnDWNclicked = false;
 }
 
+
+#ifdef servo
 bool move_valve(Servo valve, uint16_t deg)//WARNING when using dont call all the time if in a loop
 {
 	if (deg < 0 || deg>180)
@@ -152,6 +156,7 @@ bool move_valve(Servo valve, uint16_t deg)//WARNING when using dont call all the
 	}
 	return true;
 }
+#endif
 
 void FloatToString(char *str, float f, char size) {
 	char count;
