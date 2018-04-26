@@ -8,6 +8,7 @@ const int btnUP = 7, btnDWN = 8;
 const int cold_valve=9,warm_valve=10;
 const int tmpSensorPin = A0;
 
+
 Servo cold_servo;
 Servo warm_servo;
 
@@ -26,6 +27,111 @@ void measureTemp();
 void printWntTmp();
 void printCrntTmp();
 void FloatToString(char *str, float f, char size);
+void updateTmpFromSerial();
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(btnUP, INPUT_PULLUP);
+  pinMode(btnDWN, INPUT_PULLUP);
+  pinMode(tmpSensorPin, INPUT);
+
+  lcd.begin(16, 2);
+
+  printWntTmp();
+  printCrntTmp();
+
+  cold_servo.attach(cold_valve);
+  warm_servo.attach(warm_valve);
+}
+
+
+
+
+void loop() {
+  checkButtons();
+  measureTemp();
+  printCrntTmp();
+  updateTmpFromSerial();
+  delay(10);
+}
+
+
+
+void printWntTmp(){
+  lcd.setCursor(0, 0);
+  char s[5];
+  FloatToString(s, wantedTemp, 5);
+  lcd.print(s);
+  lcd.setCursor(4, 0);
+  lcd.print((char)223);
+}
+
+void printCrntTmp(){
+  lcd.setCursor(0, 1);
+  lcd.print('(');
+  char s[5];
+  FloatToString(s, currentTemp, 5);
+  lcd.print(s);
+  lcd.setCursor(5, 1);
+  lcd.print((char)223);
+  lcd.print(')');
+}
+
+
+void checkButtons() {
+  if (digitalRead(btnUP) == LOW) {
+    if (!btnUPclicked) { //clicked
+      wantedTemp++;
+      printWntTmp();
+      Serial.print("+");
+      Serial.println(wantedTemp);
+      btnUPclicked = true;
+    }
+  }
+  else btnUPclicked = false;
+
+
+  if (digitalRead(btnDWN) == LOW) {
+    if (!btnDWNclicked) { //clicked
+      wantedTemp--;
+      printWntTmp();
+      Serial.print("-");
+      Serial.println(wantedTemp);
+      btnDWNclicked = true;
+    }
+  }
+  else btnDWNclicked = false;
+}
+
+bool move_valve(Servo valve, uint16_t deg)//WARNING when using dont call all the time if in a loop
+{
+  if (deg < 0 || deg>180)
+    return false;
+  else
+  {
+    valve.write(deg);
+  }
+  return true;
+}
+
+void measureTemp(){
+   double val=analogRead(0);
+  double fenya=(val/1023)*5;
+  // Ohm Law r/100=fenya/(3.3-fenya)
+  double r=fenya/(3.3-fenya)*100;
+  currentTemp =  ( 1/(  log(r/10) /3000 + 1/(25+273.15)   )-273.15);
+}
+
+void updateTmpFromSerial(){
+  while(Serial.available()){
+      char c = Serial.read();
+      if(c & 0x80 == 0)// preset temp
+        wantedTemp = 
+  }
+  char c = Serial.read();
+  Serial.println((unsigned char)c);
+}
+
 
 void FloatToString(char *str, float f, char size){
    char count;
@@ -59,95 +165,3 @@ void FloatToString(char *str, float f, char size){
   str[size - 1] = 0;
   return;
  }
-
-void setup() {
-	Serial.begin(9600);
-	pinMode(btnUP, INPUT_PULLUP);
-	pinMode(btnDWN, INPUT_PULLUP);
-	pinMode(tmpSensorPin, INPUT);
-
-	lcd.begin(16, 2);
-
-	printWntTmp();
-	printCrntTmp();
-
-	cold_servo.attach(cold_valve);
-	warm_servo.attach(warm_valve);
-}
-
-
-
-
-void loop() {
-	checkButtons();
-	measureTemp();
-	printCrntTmp();
-	delay(10);
-}
-
-
-
-void printWntTmp(){
-  lcd.setCursor(0, 0);
-  char s[5];
-  FloatToString(s, wantedTemp, 5);
-  lcd.print(s);
-  lcd.setCursor(4, 0);
-  lcd.print((char)223);
-}
-
-void printCrntTmp(){
-  lcd.setCursor(0, 1);
-  lcd.print('(');
-  char s[5];
-  FloatToString(s, currentTemp, 5);
-  lcd.print(s);
-  lcd.setCursor(5, 1);
-  lcd.print((char)223);
-  lcd.print(')');
-}
-
-
-void checkButtons() {
-	if (digitalRead(btnUP) == LOW) {
-		if (!btnUPclicked) { //clicked
-			wantedTemp++;
-			printWntTmp();
-			Serial.print("+");
-			Serial.println(wantedTemp);
-			btnUPclicked = true;
-		}
-	}
-	else btnUPclicked = false;
-
-
-	if (digitalRead(btnDWN) == LOW) {
-		if (!btnDWNclicked) { //clicked
-			wantedTemp--;
-			printWntTmp();
-			Serial.print("-");
-			Serial.println(wantedTemp);
-			btnDWNclicked = true;
-		}
-	}
-	else btnDWNclicked = false;
-}
-
-bool move_valve(Servo valve, uint16_t deg)//WARNING when using dont call all the time if in a loop
-{
-	if (deg < 0 || deg>180)
-		return false;
-	else
-	{
-		valve.write(deg);
-	}
-	return true;
-}
-
-void measureTemp(){
-   double val=analogRead(0);
-  double fenya=(val/1023)*5;
-  // Ohm Law r/100=fenya/(3.3-fenya)
-  double r=fenya/(3.3-fenya)*100;
-  currentTemp =  ( 1/(  log(r/10) /3000 + 1/(25+273.15)   )-273.15);
-}
