@@ -4,8 +4,7 @@
 
 const int  d4 = 6, d5 = 5, d6 = 4, d7 = 3;
 const int btnUP = 7, btnDWN = 8;
-#define cold_valve 9
-#define warm_valve 10
+const int cold_valve=9,warm_valve=10;
 const int rs = 12, en = 11;  // pins defines
 
 Servo cold_servo;
