@@ -83,20 +83,20 @@ void measureTemp() {
 	currentTemp = (1 / (log(r / 10) / 3000 + 1 / (25 + 273.15)) - 273.15);
 }
 
-void updateTmpFromSerial() {
-	while (Serial.available()) {
-		char c = Serial.read();
-		if (c & 0x80 == 0)// preset temp
-			wantedTemp = c;
-		else {
-			if (c & 0x40 != 0)//neg
-				wantedTemp += (c | 0x80);
-			else
-				wantedTemp += c & 0x7F;
-		}
-	}
-	char c = Serial.read();
-	Serial.println((unsigned char)c);
+void updateTmpFromSerial(){
+  while(Serial.available()){
+    char c = Serial.read();
+    if(c == 0xFF){
+      
+    }else if(c == 0xFE){
+      
+    }
+    else{
+      wantedTemp = c;
+    }
+  }
+  char c = Serial.read();
+  Serial.println((unsigned char)c);
 }
 
 void printWntTmp() {
