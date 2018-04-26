@@ -6,7 +6,7 @@ const int  d4 = 6, d5 = 5, d6 = 4, d7 = 3;
 const int rs = 12, en = 11;  // for led disply pins defines
 const int btnUP = 7, btnDWN = 8;
 const int cold_valve=9,warm_valve=10;
-
+const int tmpSensorPin = A0;
 
 Servo cold_servo;
 Servo warm_servo;
