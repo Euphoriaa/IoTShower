@@ -82,12 +82,17 @@ void loop() {
 
 
 
-#ifdef poentiameter
+#ifdef potentiameter
 void measureTemp() {
+	double val = analogRead(0);
+	double fenya = (val / 1023) * 5;
+	// Ohm Law r/100=fenya/(3.3-fenya)
+	double r = fenya / (3.3 - fenya) * 100;
+	currentTemp = (1 / (log(r / 10) / 3000 + 1 / (25 + 273.15)) - 273.15);
 }
 #endif // 
 
-#ifndef poentiameter
+#ifndef potentiameter
 void measureTemp() {
 	double val = analogRead(0);
 	double fenya = (val / 1023) * 5;
