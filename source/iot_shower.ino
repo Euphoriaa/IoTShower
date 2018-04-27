@@ -3,6 +3,7 @@
 
 #define flow_support false
 #define servo//motor
+#define potentiameter
 
 //pin layout
 const uint16_t  d4 = 6, d5 = 5, d6 = 4, d7 = 3;
@@ -27,8 +28,9 @@ LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 bool btnUPclicked = false;
 bool btnDWNclicked = false;
 
-float wantedTemp = 38;
-float currentTemp = 38;
+const uint16_t default_temp = 38;
+float wantedTemp = default_temp;
+float currentTemp = default_temp;//default also in frontend
 
 
 
@@ -43,6 +45,9 @@ void measureTemp();//todo
 void printWntTmp();
 void printCrntTmp();
 void updateTmpFromSerial();
+void print_to_serial(uint16_t command);
+
+
 
 void setup() {
 	Serial.begin(9600);
@@ -69,13 +74,17 @@ void loop() {
 	measureTemp();
 	printCrntTmp();
 	updateTmpFromSerial();
-	printWntTmp();
 	delay(10);
 }
 
 
 
+#ifdef poentiameter
+void measureTemp() {
+	}
+#endif // 
 
+#ifndef poentiameter
 void measureTemp() {
 	double val = analogRead(0);
 	double fenya = (val / 1023) * 5;
@@ -83,21 +92,34 @@ void measureTemp() {
 	double r = fenya / (3.3 - fenya) * 100;
 	currentTemp = (1 / (log(r / 10) / 3000 + 1 / (25 + 273.15)) - 273.15);
 }
+#endif // !poentiameter
 
-void updateTmpFromSerial(){
-  while(Serial.available()){
-    char c = Serial.read();
-    if(c == 0xFF){
-      
-    }else if(c == 0xFE){
-      
-    }
-    else{
-      wantedTemp = c;
-    }
-  }
-  char c = Serial.read();
-  Serial.println((unsigned char)c);
+
+
+void print_to_serial(uint16_t command)
+{
+	while (Serial.available())
+		updateTmpFromSerial();
+	//if (command<2 && command>-1)
+	if(command==1||command==-1)
+		Serial.println(command);
+}
+
+void updateTmpFromSerial() {
+	while (Serial.available()) {
+		char c = Serial.read();
+		if (c == 0xFF) {
+			//todo:turn off water
+		}
+		else if (c == 0xFE) {
+			wantedTemp = default_temp;
+		}
+		else {
+			wantedTemp = c;
+		}
+	}
+	char c = Serial.read();
+	Serial.println((unsigned char)c);
 }
 
 void printWntTmp() {
@@ -124,6 +146,7 @@ void checkButtons() {
 	if (digitalRead(btn_temp_UP) == LOW) {
 		if (!btnUPclicked) { //clicked
 			wantedTemp++;
+			print_to_serial(1);
 			printWntTmp();
 			Serial.print("+");
 			Serial.println(wantedTemp);
@@ -136,6 +159,7 @@ void checkButtons() {
 	if (digitalRead(btn_temp_DWN) == LOW) {
 		if (!btnDWNclicked) { //clicked
 			wantedTemp--;
+			print_to_serial(-1);
 			printWntTmp();
 			Serial.print("-");
 			Serial.println(wantedTemp);
