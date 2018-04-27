@@ -137,6 +137,7 @@ void updateTmpFromSerial() {
 		else {
 			wantedTemp = c;
 		}
+
 		printWntTmp();//not sure
 	}
 	char c = Serial.read();
