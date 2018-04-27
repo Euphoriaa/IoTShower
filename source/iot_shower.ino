@@ -28,7 +28,10 @@ LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 bool btnUPclicked = false;
 bool btnDWNclicked = false;
 
+bool water_on;
+
 const uint16_t default_temp = 38;
+const uint16_t default_degree = 0;//the value that water is off
 float wantedTemp = default_temp;
 float currentTemp = default_temp;//default also in frontend
 
@@ -39,6 +42,7 @@ float currentTemp = default_temp;//default also in frontend
 
 #ifdef servo
 bool move_valve(Servo valve, uint16_t deg);
+void update_servo();
 #endif
 void checkButtons();
 void measureTemp();//todo
@@ -46,20 +50,23 @@ void printWntTmp();
 void printCrntTmp();
 void updateTmpFromSerial();
 void print_to_serial(uint16_t command);
-#ifdef potentiamter
+#ifdef potentiameter
 void led_show(int);
+void p_feedback();
+int p_error = 0;
 #endif
 
 
 
 void setup() {
-	Serial.begin(9600);
+	Serial.begin(115200);
 	pinMode(btn_temp_UP, INPUT_PULLUP);
 	pinMode(btn_temp_DWN, INPUT_PULLUP);
 	pinMode(tmpSensorPin, INPUT);
 
 	lcd.begin(16, 2);
 
+	water_on = false;
 
 	printWntTmp();
 	printCrntTmp();
@@ -73,11 +80,15 @@ void setup() {
 
 
 void loop() {
-	checkButtons();
-	measureTemp();
-	printCrntTmp();
-	updateTmpFromSerial();
-	delay(10);
+	while (1)
+	{
+		checkButtons();
+		measureTemp();
+		printCrntTmp();
+		updateTmpFromSerial();
+		update_servo();
+		delay(5);
+	}
 }
 
 
@@ -117,14 +128,16 @@ void updateTmpFromSerial() {
 	while (Serial.available()) {
 		char c = Serial.read();
 		if (c == 0xFF) {
-			//todo:turn off water
+			water_on = false;
 		}
 		else if (c == 0xFE) {
+			water_on = true;
 			wantedTemp = default_temp;
 		}
 		else {
 			wantedTemp = c;
 		}
+		printWntTmp();//not sure
 	}
 	char c = Serial.read();
 	Serial.println((unsigned char)c);
@@ -154,7 +167,9 @@ void checkButtons() {
 	if (digitalRead(btn_temp_UP) == LOW) {
 		if (!btnUPclicked) { //clicked
 			wantedTemp++;
-			print_to_serial(1);
+			//todo
+			//need for two way com
+			//print_to_serial(1);
 			printWntTmp();
 			Serial.print("+");
 			Serial.println(wantedTemp);
@@ -167,7 +182,9 @@ void checkButtons() {
 	if (digitalRead(btn_temp_DWN) == LOW) {
 		if (!btnDWNclicked) { //clicked
 			wantedTemp--;
-			print_to_serial(-1);
+			//todo
+			//need for two way com
+			//print_to_serial(-1);
 			printWntTmp();
 			Serial.print("-");
 			Serial.println(wantedTemp);
@@ -186,7 +203,7 @@ bool move_valve(Servo valve, uint16_t deg)//WARNING when using dont call all the
 	else
 	{
 #ifdef potentiameter
-		if (abs(deg - valve.read()) > 5))
+		if (abs(deg - valve.read()) > 5)
 		led_show(abs(deg - valve.read()));
 #endif
 
@@ -228,3 +245,35 @@ void FloatToString(char *str, float f, char size) {
 	str[size - 1] = 0;
 	return;
 }
+
+#ifdef potentiameter
+void update_servo()
+{
+	if (water_on == false)
+	{
+		move_valve(warm_servo,default_degree);
+	}
+	else
+	{
+		p_feedback();
+	}
+}
+
+
+void p_feedback()
+{
+	if (currentTemp > wantedTemp)
+		p_error--;//need tom move down
+	if (currentTemp < wantedTemp)
+		p_error++;;//need to move up
+	if (p_error > 0)
+	{
+		warm_servo.write(warm_servo.read() + p_error);
+	}
+}
+
+void led_show(int)
+{
+	//todo
+}
+#endif
