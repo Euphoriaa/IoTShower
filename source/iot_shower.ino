@@ -46,6 +46,9 @@ void printWntTmp();
 void printCrntTmp();
 void updateTmpFromSerial();
 void print_to_serial(uint16_t command);
+#ifdef potentiamter
+void led_show(int);
+#endif
 
 
 
@@ -81,7 +84,7 @@ void loop() {
 
 #ifdef poentiameter
 void measureTemp() {
-	}
+}
 #endif // 
 
 #ifndef poentiameter
@@ -101,7 +104,7 @@ void print_to_serial(uint16_t command)
 	while (Serial.available())
 		updateTmpFromSerial();
 	//if (command<2 && command>-1)
-	if(command==1||command==-1)
+	if (command == 1 || command == -1)
 		Serial.println(command);
 }
 
@@ -177,6 +180,11 @@ bool move_valve(Servo valve, uint16_t deg)//WARNING when using dont call all the
 		return false;
 	else
 	{
+#ifdef potentiameter
+		if (abs(deg - valve.read()) > 5))
+		led_show(abs(deg - valve.read()));
+#endif
+
 		valve.write(deg);
 	}
 	return true;
