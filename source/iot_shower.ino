@@ -69,6 +69,7 @@ void loop() {
 	measureTemp();
 	printCrntTmp();
 	updateTmpFromSerial();
+	printWntTmp();
 	delay(10);
 }
 
